@@ -1,0 +1,4 @@
+//Enum class to seperate each object
+public enum ID{
+  Player(), Enemy(), EnemySight(), EnemySight2(), EnemySight3(), Walls(), Walls2(), KeyWall(), FlagPole(), PowerBox(), HealthBox(), KeyBox(), FinalBoss();
+}

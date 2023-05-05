@@ -1,0 +1,248 @@
+/*************************************************
+  * Created by: Abbas Peer Mohammed
+  * 
+  * Title: Escape 2 
+  * 
+  * Version: 1.0
+  * 
+  * Description: This game is a stealth game, you have to avoid the enemy eye sight or you will die. There are 5 levels,
+  * in the first 4, you have to sneak past enemys, the last one has a final boss which follows you around the level.
+  * There is a timer, if it hits zero, you die. You can also pick up a power up box, which wil turn you invisible
+  * for three seconds. You cant be seen by enemys. You can also pick up health boxes it increase your health. 
+  * 
+  * Started: 2021-08-15
+  * 
+  * Finished: 2021-09-02
+  * ***************************************************************/
+
+//Importing
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.geom.*; 
+import javax.swing.Timer;
+import java.awt.image.BufferStrategy;
+import java.awt.Canvas;
+
+public class Project extends Canvas implements Runnable, ActionListener{
+  
+  public static final int WIDTH = 1210, HEIGHT = 910;//Canvas size
+  public static int level = 0;//Used for adding objects for specific levels  
+  public static int second = 0;//Used for timer
+  public static int doubleSecond = 0;//Used for timer
+  public static int minute = 0;//Used for timer 
+  public static int invisibleTimer = 0;//Used for timer
+  public static boolean invisible = false;//Used to see if invisible power up is active
+  
+  private Thread thread;//Thread used to run timer 
+  private boolean running = false;//Checks to see if game is running 
+  private Handler handler;//Instance of handler class
+  private HUD hud;//Instance of hud class
+  private Menu menu;//Instance of menu class
+  private Levels levels;//Instance of level class 
+  
+  //Enums used to see what state the game is in
+  public enum STATE{Menu, Game, Help, End, Won};
+  public STATE gameState = STATE.Menu;//Setting the state to menu first
+  
+  //Used for timer
+  Timer timer;
+  
+  //Constructor
+  public Project(){
+    
+    //So the player dosent have to press the window to start playing
+    this.setFocusable(true);
+    
+    handler = new Handler();//Instance of handler class
+    hud = new HUD();//Instance of hud class 
+    levels = new Levels(this, handler);//Instance of level class 
+    menu = new Menu(this, handler);//Instance of menu class
+    
+    //Adding the key and mouse listener
+    this.addKeyListener(new KeyInput(handler));
+    this.addMouseListener(menu);
+    
+    //Starting the timer
+    Timer(); 
+    timer.start(); 
+    
+    //Creating the window
+    new Window(WIDTH, HEIGHT, "Game", this);   
+  }
+  
+  //Method used to see if the game has started
+  public synchronized void start() {
+    //Start the thread
+    thread = new Thread(this);
+    thread.start();
+    running = true;//Set boolean value to true 
+  }
+  
+  //Method used to see if the game has stoped
+  public synchronized void stop() {
+    //Try Catch block
+    try{
+      thread.join(); 
+      running = false;//Set boolean value to false  
+    }catch(Exception e){
+      e.printStackTrace();  
+    }
+  }
+  
+  //Game loop
+  public void run() {
+    long lastTime = System.nanoTime(); 
+    double amountOfTicks = 60.0; 
+    double ns = 1000000000 / amountOfTicks; 
+    double delta = 0; 
+    long timer = System.currentTimeMillis(); 
+    int frames = 0; 
+    while(running){
+      long now = System.nanoTime(); 
+      delta += ((now - lastTime) / ns);
+      lastTime = now; 
+      while(delta >= 1){
+        tick(); 
+        delta--;
+      }
+      if(running) {
+        render(); 
+        frames++; 
+      }
+      if((System.currentTimeMillis() - timer) > 1000){
+        timer += 1000; 
+        frames = 0; 
+      }
+    } 
+    stop(); 
+  }
+  
+  //Methods to set all classes that have a tick
+  private void tick(){
+    handler.tick();//Set the handler's tick
+    //If the game has started
+    if(gameState == STATE.Game){
+      hud.tick();//Set the hud's tick
+      levels.tick();//Set the level's tick 
+      
+      //If the health runs out, or the timer hits zero
+      if(HUD.HEALTH <= 0 || (second == 0 && minute == 0 && doubleSecond == 0)){
+        HUD.HEALTH = 100;//Reset health
+        //Set timer to zero 
+        second = 0; 
+        doubleSecond = 0; 
+        minute = 0; 
+        invisible = false;//Turn of invisibile power up
+        invisibleTimer = 0;//Set the invisiblity power timer to zero 
+        HUD.deathCounter++;//Increment the death coutner
+        HUD.keyCounter = 0;//Set the key counter to zero
+        gameState = STATE.End;//The game is now in an game over state 
+      }
+      //If the player has won the game
+      if(HUD.levelCounter == 6){
+        HUD.HEALTH = 100;//Reset health
+        //Set timer to zero 
+        second = 0; 
+        doubleSecond = 0; 
+        minute = 0; 
+        invisible = false;//Turn of invisible power up
+        invisibleTimer = 0;//Set the invisiblity power timer to zero  
+        HUD.keyCounter = 0;//Set the key counter to zero
+        gameState = STATE.Won;//The game is now in an game won state 
+      }
+    }
+    //If the game is in the menu, or if it has been won or lost
+    else if(gameState == STATE.Menu || gameState == STATE.End || gameState == STATE.Won){
+      menu.tick();//Set the menu's tick 
+    }
+  }
+  
+  //Methods to set all classes that have a render 
+  private void render(){
+    //Creating a buffer strategy
+    BufferStrategy bs = this.getBufferStrategy(); 
+    if(bs == null){
+      this.createBufferStrategy(3);
+      return;
+    }
+    
+    //Create a graphics variable
+    Graphics g = bs.getDrawGraphics(); 
+    
+    //Background color
+    g.setColor(Color.BLACK);
+    g.fillRect(0,0,WIDTH,HEIGHT);
+    
+    handler.render(g);//Render the handler
+    
+    //If the game has started
+    if(gameState == STATE.Game){
+      hud.render(g);//Render the HUD
+    }
+    
+    //If the game is in the menu, help page, or if it has been won or lost
+    else if(gameState == STATE.Menu || gameState == STATE.Help || gameState == STATE.End || gameState == STATE.Won){
+      menu.render(g);//Render the menu 
+    }
+    //If the game is in no state
+    g.dispose();//Dispose 
+    bs.show();//Show 
+  }
+  
+  //Method used for the timer
+  public void Timer(){
+    timer = new Timer(1000, this);//Setting it to 1000
+  }
+  
+  //Action Performed method for the timer
+  public void actionPerformed(ActionEvent e) {
+    
+    //If the game has started
+    if(gameState == STATE.Game){
+      
+      //Decrease the fourth digit
+      second--;
+      
+      //If the fourth digit hits zero
+      if(second < 0){
+        second = 9;//Set it back to 9 
+        doubleSecond--;//Lower the third digit by 1 
+      }
+      //If the third digit is less than zero 
+      if(doubleSecond < 0){
+        doubleSecond = 5;//Set it to 5 
+        minute--;//Lower the second digit by 1 
+      }
+      
+      //If the invisibility timer hits 1
+      if(invisibleTimer <= 1){
+        invisible = false;//Turn of the powerup 
+        invisibleTimer = 0;//Set the timer to zero
+      }else{
+        //If the power up is still on
+        invisible = true;//Turn the power on 
+        invisibleTimer--;//Lower the timer
+      }
+    }
+  }
+  
+  //Restrict method to make sure nothing goes of screen or is to big
+  public static float restrict(float var, float min, float max){
+    //If the variable is bigger than the max
+    if(var >= max){
+      return var = max;//Set the variable to the max 
+    }
+    //If the variable is lower than the min
+    else if(var <= min){
+      return var = min;//Set the variable to the min 
+    }
+    else{
+      return var;//If not then return the variable  
+    }
+  }
+  
+  //Main method
+  public static void main(String[] args) {   
+    new Project();//Run the game 
+  } 
+}

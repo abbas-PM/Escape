@@ -1,0 +1,72 @@
+import java.awt.Color; 
+import java.awt.Graphics; 
+import java.awt.*;
+
+public class HUD {
+  
+  public static int HEALTH = 100; 
+  public static int levelCounter = 1; 
+  public static int deathCounter = 0; 
+  public static int keyCounter = 0; 
+  
+  private int greenValue = 255; 
+  
+  public void tick(){
+    HEALTH = Project.restrict(HEALTH,0,100);
+    greenValue = Project.restrict(greenValue,0,255);
+    
+    greenValue = HEALTH*2;
+  }
+  
+  public void render(Graphics g){
+    g.setColor(Color.gray);
+    g.fillRect(500,5,200,32);
+    g.setColor(Color.getHSBColor( (1f * HEALTH) / 360, 1f, 1f));
+    g.fillRect(500,5,HEALTH * 2,32);
+    g.setColor(Color.white);
+    g.drawRect(500,5,200,32);
+    
+    g.drawLine(0,0,0,50);
+    g.drawLine(0,50,Project.WIDTH,50);
+    g.drawLine(Project.WIDTH-8,0,Project.WIDTH-8,50);
+    
+    g.setColor(Color.black);
+    g.setFont(new Font("TIMES NEW ROMAN", Font.PLAIN, 25));
+    g.drawString("HEALTH" ,(Project.WIDTH/2 - 47),28);
+    
+    g.setFont(new Font("Ariel", Font.PLAIN, 20));
+    
+    g.setColor(new Color(51,153,255));
+    g.drawString("Time Left:" ,1020,40);
+    g.setColor(new Color(197,139,231));
+    g.drawString("Invisibility:" ,1020,20);
+    
+    g.setColor(Color.white);
+    g.drawString("Level: " + levelCounter ,10,20);
+    g.drawString("Deaths: " + deathCounter ,10,40);
+    
+    if(Project.minute == 0 && Project.doubleSecond <= 2){
+      g.setColor(Color.red); 
+      g.drawString("0" + Project.minute + ":" + Project.doubleSecond + Project.second, 420,30);
+    }else{
+      g.setColor(Color.white); 
+      g.drawString("0" + Project.minute + ":" + Project.doubleSecond + Project.second, 420,30);
+    }
+    
+    g.setColor(new Color(197,139,231));
+    if(Project.invisibleTimer < 10){
+      g.drawString("00" + ":" + "0" + Project.invisibleTimer ,1130,40);
+    }else{
+      g.drawString("00" + ":" + Project.invisibleTimer ,1130,40); 
+    }
+    g.setColor(new Color(51,153,255));
+    if(Project.invisible == false){
+      g.drawString("Off" ,1150,20); 
+    }else{g.drawString("On" ,1150,20);}
+    
+    if(levelCounter == 5){
+      g.setColor(new Color(255,204,0));
+      g.drawString("Keys Collected: " + keyCounter + "/5" ,710,30);
+    }
+  }
+}

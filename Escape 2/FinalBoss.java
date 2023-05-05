@@ -1,0 +1,77 @@
+//Importing
+import java.awt.Color; 
+import java.awt.Graphics; 
+import java.awt.Rectangle;
+import java.applet.*;
+import java.awt.*;
+
+public class FinalBoss extends GameObject{
+  
+  private Handler handler;//Creating an instance of the handler 
+  private GameObject tempPlayer;//Creating an instance of the gameobject 
+  
+  //Boss size
+  int width = 150;
+  int height = 150; 
+  
+  //Constructor
+  public FinalBoss(int x, int y, ID id, Handler handler){
+    super(x,y,id);//Parent class is GameObject   
+    
+    this.handler = handler;
+    
+    //Goes through the linked list
+    for(int i=0;i < handler.object.size();i++){
+      //If the id is the player, set the temp object as the player
+      if(handler.object.get(i).getId() == ID.Player) tempPlayer = handler.object.get(i);
+    }
+  }
+  
+  //Tick method
+  public void tick(){
+    //As long as the invisible power up is off
+    if(Project.invisible == false){
+      //Making the boss move
+      x += velX * 2.625; 
+      y += velY * 2.625;
+      
+      //To make sure the boss dosent move off screen
+      x = Project.restrict(x,0,850);
+      y = Project.restrict(y,50,Project.HEIGHT - 180);
+      
+      //Algorithm to make the boss follow you
+      float diffX = x - tempPlayer.getX() - 8;  
+      float diffY = y - tempPlayer.getY() - 8;
+      float distance = (float)Math.sqrt((x - tempPlayer.getX())*(x - tempPlayer.getX()) + (y - tempPlayer.getY())*(y - tempPlayer.getY()));
+      
+      velX = (float)((-1.0/distance) * diffX);
+      velY = (float)((-1.0/distance) * diffY);
+    }
+    //If the power up is true
+    else if(Project.invisible == true){
+      //The boss is confused, it will stop
+      velX = 0;
+      velY = 0;
+    }
+  }
+  //Render method
+  public void render(Graphics g){
+    
+    //Graphics variable
+    Graphics2D g2d = (Graphics2D)g;
+    
+    //If the final boss is moving left, draw the left version of the sprite
+    if(velX < 0) g.drawImage(Window.image1,(int)x+5,(int)y,150,150,null);
+    //If the final boss is moving right, draw the right version of the sprite
+    if(velX >= 0) g.drawImage(Window.image2,(int)x+3,(int)y,150,150,null); 
+    
+    //Draw the hitbox
+    g.setColor(Color.RED);
+    g2d.draw(getBounds());  
+  }
+  
+//Boss hitbox
+  public Rectangle getBounds(){
+    return new Rectangle((int)x,(int)y,150,150);
+  } 
+}

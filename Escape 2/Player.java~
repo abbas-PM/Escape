@@ -1,0 +1,162 @@
+//Importing
+import java.awt.Color; 
+import java.awt.Graphics; 
+import java.awt.Rectangle;
+
+public class Player extends GameObject {
+  
+  Handler handler;//Instance of handler 
+  
+  //Player size
+  int width = 20;
+  int height = 20; 
+  
+  //Player constuctor
+  public Player(int x,int y, ID id, Handler handler){
+    super(x,y,id);//Parent Class is GameObject
+    this.handler = handler; 
+  }
+  
+  //Tick method
+  public void tick(){
+    
+    //Making the player move
+    x += velX; 
+    y += velY;  
+    
+    //To make sure the player dosent move off screen
+    x = Project.restrict(x,0,Project.WIDTH - 32);
+    y = Project.restrict(y,50,Project.HEIGHT - 50);
+    
+    Collision();//Calling on collision method 
+  }
+  
+  //Used for collision
+  private void Collision(){
+    
+    //Goes through linked list
+    for(int i = 0; i < handler.object.size();i++){
+      
+      //Creating tempObject
+      GameObject tempObject = handler.object.get(i);
+      
+      //Collision with an enemy
+      if(tempObject.getId() == ID.Enemy||tempObject.getId() == ID.EnemySight||tempObject.getId() == ID.EnemySight2||tempObject.getId() == ID.EnemySight3){
+        //As long as invisibility power up isnt active
+        if(Project.invisible == false){
+          //Sees if player intersects with enemy
+          if(getBounds().intersects(tempObject.getBounds())||getBoundsLeft().intersects(tempObject.getBounds()) 
+               ||getBoundsRight().intersects(tempObject.getBounds())||getBoundsTop().intersects(tempObject.getBounds())){ 
+            //Lowers Health 
+            HUD.HEALTH -= 5; 
+          }
+        }
+      }
+      //Collision with a wall
+      if(tempObject.getId() == ID.Walls || tempObject.getId() == ID.Walls2 || tempObject.getId() == ID.KeyWall){
+        if(getBoundsRight().intersects(tempObject.getBounds())){ //Sees if player is intersecting with the left side of the wall   
+          handler.object.get(0).setX(handler.object.get(0).getX() - 3);
+        }
+        if(getBoundsLeft().intersects(tempObject.getBounds())){ //Sees if player is intersecting with the right side of the wall 
+          handler.object.get(0).setX(handler.object.get(0).getX() + 3);
+        }
+        if(getBoundsTop().intersects(tempObject.getBounds())){ //Sees if player is intersecting with the bottom side of the wall 
+          handler.object.get(0).setY(handler.object.get(0).getY() + 3);
+        }
+        if(getBounds().intersects(tempObject.getBounds())){ //Sees if player is intersecting with the top side of the wall 
+          handler.object.get(0).setY(handler.object.get(0).getY() - 3);
+        }
+      }
+      //Collision with a flagpole
+      if(tempObject.getId() == ID.FlagPole){
+        //Sees if the player is intersecting with the flagpole
+        if(getBounds().intersects(tempObject.getBounds())||getBoundsLeft().intersects(tempObject.getBounds()) 
+             ||getBoundsRight().intersects(tempObject.getBounds())||getBoundsTop().intersects(tempObject.getBounds())){
+          HUD.levelCounter++;
+          Project.level = HUD.levelCounter;
+        }
+      }
+      //Collision with a PowerBox
+      if(tempObject.getId() == ID.PowerBox){
+        //Sees if the player is intersecting with the box
+        if(getBounds().intersects(tempObject.getBounds())||getBoundsLeft().intersects(tempObject.getBounds()) 
+             ||getBoundsRight().intersects(tempObject.getBounds())||getBoundsTop().intersects(tempObject.getBounds())){
+          handler.removeObject(handler.object.get(i));//Remove the power box from the screen
+          Project.invisible = true;//Set the boolean value to true 
+          //Limit to invisible timer
+          if(Project.invisibleTimer != 59){
+            Project.invisibleTimer += 3;//Add 3 seconds to the invisibility timer
+          }
+        } 
+      }
+      //Collision with a HealthBox
+      if(tempObject.getId() == ID.HealthBox){
+        //As long as invisibility power up isnt active
+        if(Project.invisible == false){
+          //Sees if the player is intersecting with the box
+          if(getBounds().intersects(tempObject.getBounds())||getBoundsLeft().intersects(tempObject.getBounds()) 
+               ||getBoundsRight().intersects(tempObject.getBounds())||getBoundsTop().intersects(tempObject.getBounds())){
+            handler.removeObject(handler.object.get(i));//Remove the power box from the screen
+            HUD.HEALTH += 10;//Increase Health 
+          }
+        } 
+      }
+      //Collision with a KeyBox
+      if(tempObject.getId() == ID.KeyBox){
+        //As long as invisibility power up isnt active
+        if(Project.invisible == false){
+          //Sees if the player is intersecting with the box
+          if(getBounds().intersects(tempObject.getBounds())||getBoundsLeft().intersects(tempObject.getBounds()) 
+               ||getBoundsRight().intersects(tempObject.getBounds())||getBoundsTop().intersects(tempObject.getBounds())){
+            handler.removeObject(handler.object.get(i));//Remove the power box from the screen
+            HUD.keyCounter++;//Increase keyCounter by 1 
+          }
+        } 
+      }
+      //Collision with the Final Boss
+      if(tempObject.getId() == ID.FinalBoss){
+        //As long as invisibility power up isnt active
+        if(Project.invisible == false){
+          //Sees if the player is intersecting with the boss
+          if(getBounds().intersects(tempObject.getBounds())||getBoundsLeft().intersects(tempObject.getBounds()) 
+               ||getBoundsRight().intersects(tempObject.getBounds())||getBoundsTop().intersects(tempObject.getBounds())){
+            HUD.HEALTH -= 1.25;//Lower Health
+          }
+        } 
+      }
+    } 
+  }
+  
+  //Render method
+  public void render(Graphics g){
+    
+    //If the invisible power up is off
+    if(Project.invisible == false){
+      //Fill the rectangle
+      g.setColor(Color.GREEN);
+      g.fillRect((int)x,(int)y,width,height);
+    }
+    else if(Project.invisible == true){
+      //If its on, draw the rectangle
+      g.setColor(Color.GREEN);
+      g.drawRect((int)x,(int)y,width,height);
+    }
+  }
+  
+  //Bottom Player Hitbox 
+  public Rectangle getBounds(){
+    return new Rectangle((int)(x+(width/2)-((width/2)/2)),(int)y+(height/2),width/2,height/2);
+  }
+  //Top Player Hitbox 
+  public Rectangle getBoundsTop(){
+    return new Rectangle((int)(x+(width/2)-((width/2)/2)),(int)y,width/2,height/2);
+  }
+  //Left Player Hitbox 
+  public Rectangle getBoundsLeft(){
+    return new Rectangle((int)x,(int)y+5,5,height-10);
+  }
+  //Right Player Hitbox 
+  public Rectangle getBoundsRight(){
+    return new Rectangle((int)x+width-5,(int)y+5,5,height-10);
+  }  
+}

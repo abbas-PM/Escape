@@ -1,0 +1,30 @@
+import java.awt.Color; 
+import java.awt.Graphics; 
+import java.awt.Rectangle;
+import java.applet.*;
+import java.awt.*;
+
+//Basically useless class made for level 4
+public class EnemySight3 extends GameObject{
+  
+  //Basically useless constructor made for level 4
+  public EnemySight3(int x, int y, ID id){
+    super(x,y,id);  
+  }
+  //Basically useless tick method made for level 4
+  public void tick(){}
+  
+  //Basically useless rendor method made for level 4
+  public void render(Graphics g){
+   
+    Graphics2D g2d = (Graphics2D)g;
+    
+    //Creating Enemy
+    g.setColor(Color.red);
+    g2d.drawRect(x,y,120,19);
+  }
+  //Enemy hitbox for basically useless object
+  public Rectangle getBounds(){
+    return new Rectangle(x,y,122,19);
+  }
+}
